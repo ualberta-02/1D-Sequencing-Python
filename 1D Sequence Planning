@@ -1,0 +1,73 @@
+# Yichen Wen
+# Sep 19th, 2017
+# 1D assembly sequence planning in python
+# This program allows the user to specify the length of the 1 dimensional assembly array and the universal
+# installation time for all modules.
+# The program generates random values of waiting for each module and produces the best construction sequence without
+# leaving a hole along the way, which intensify the difficulty of practical construction.
+
+#----------------------------------------------------------------------------------------------------
+
+import random
+
+def main():
+    n = int(input("How many modules do you want to include in the assembly array? "))
+    T = int(input("How many days does it take to install one module? "))
+    A = []
+    CreateArray(n,A)
+    MT = minTime(A,T)
+    Seq = [0 for i in range(n)]
+
+    # Two pointers
+    start = 0
+    end = n-1
+    Sequencing(A, Seq, T, MT, start, end)
+
+    FinalSeq = [0 for i in range(n)]
+    for m in range(n):
+        FinalSeq[m] = Seq[m]+1
+
+    print("The best sequence of constructing the array is: " + str(FinalSeq))
+
+#------------------------------------------------------------------------------------------------------------
+def CreateArray(n,A):
+    # Create an Array A with n modules, each contains random value of waiting time for the module
+    for i in range(n):
+        A.append(random.randint(0,10)) #assume the maximum waiting time is 10 days
+    print("The assembly array is created as follows: "+ str(A))
+
+
+def minTime(A,T):
+    # Create the upper-triangle matrix MT such that each row of MT contains the up-to-date minimal time of
+    # constructing i+1 blocks
+    # Note: MT[n][0] is the total minimal time of construction.
+
+    n = len(A)
+    MT = [[0 for i in range(n)] for j in range(n)]
+    for j in range(0,n):
+        MT[0][j] = A[j]+T # time of installing each block after its individual waiting time
+    for i in range(1,n):
+        for j in range(0,n-i):
+            MT[i][j] = min(max(A[j],MT[i-1][j+1])+T,max(A[i+j],MT[i-1][j])+T)
+    return MT
+#    Printing the Matrix MT
+#    for i in range(n):
+#        print(MT[i])
+
+
+def Sequencing(A,Seq,T,MT,start,end):
+    # The function decides on the sequence by two pointers, start and end, recursively
+
+    if start != end:
+        i = end-start #row number of MT to be found
+        if MT[i][start] - T == max(MT[i-1][start],A[end]):
+            Seq[i] = end
+            Seq = Sequencing(A,Seq,T,MT,start,end-1)
+        else:
+            Seq[i] = start
+            Seq = Sequencing(A,Seq,T,MT,start+1,end)
+    else: #Two pointers converge to one position (last one)
+        Seq[0] = end #(or start)
+
+#-------------------------------------------------------------------------------------------------------------
+main()
